@@ -18,8 +18,8 @@ The script takes two folder paths, the log file path and synchronization interva
 
 ## Usage
 
-Inputs are given as command line arguements, meant to emulate a Unix style run:
-> python sync_folders.py <source_path> <replica_path> --interval <interval (s)> --log_file <log file path>
+Inputs are given as command line arguements:
+$ python sync_folders.py <source_path> <replica_path> --interval <interval (s)> --log_file <log file path>
 
 Example:
-> python sync_folders.py C:\Users\test1 C:\Users\test2 --interval 10 --log_file log.txt
+$ python sync_folders.py C:\Users\test1 C:\Users\test2 --interval 10 --log_file log.txt
