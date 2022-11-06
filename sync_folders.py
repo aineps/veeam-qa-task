@@ -4,6 +4,20 @@ import shutil
 from stat import *
 
 import time
+import argparse
+
+def parse_arguments():
+    '''Takes the command line arguments and creates a sync object with them.'''
+    parser = argparse.ArgumentParser(description="Script which syncs a source folder with a replica repeated at a given interval. Usage: sync_folders.py <source_path> <replica_path> --interval <interval (s)> --log_file <log file path>")
+    
+    parser.add_argument("src_path", type=str, help="Source file path")
+    parser.add_argument("repl_path", type=str, help="Replica file path")
+    parser.add_argument("--interval", type=int, help="Sync interval in seconds")
+    parser.add_argument("--log_file", type=str, help="Log file path")
+
+    args = parser.parse_args()
+    return SyncObject(Folder(args.src_path), Folder(args.repl_path), args.interval, args.log_file, "test")
+
 
 class Folder:
     '''
@@ -37,16 +51,18 @@ class SyncObject:
         - delete_files: Deletes files
     '''
 
-    def __init__(self, source, replica, log_file, name=""):
+    def __init__(self, source, replica, interval, log_file, name=""):
         '''Constructor for sync class. 
         Inputs: 
         - source: source folder (Folder)
         - replica: replica folder (Folder)
+        - interval: interval time (int)
         - log_file: log file path (string)
         '''
         self.name = name
         self.source = source
         self.replica = replica
+        self.interval = interval
         self.log_file = os.path.abspath(log_file)
 
         self.file_created_count = 0
@@ -54,16 +70,21 @@ class SyncObject:
         self.file_deleted_count = 0
 
     def compare_root(self):
-        '''Starts sync and logs this to console. Ends by logging a count of file actions to the console and resetting the count.'''
-        # start sync
-        print("Syncing " + self.source.root_path + " + " + self.replica.root_path)
-        self.compare_folders(self.source.root_path, self.replica.root_path)
-        print("Files created: " + str(self.file_created_count), "Files copied: " + str(self.file_copied_count), "Files deleted: " + str(self.file_deleted_count) + "\n")
-        
-        # clear after printing (if we want an overall count printed, just remove this)
-        self.file_created_count = 0
-        self.file_copied_count = 0
-        self.file_deleted_count = 0
+        '''Starts sync and logs this to console. Ends one sync by logging a count of file actions to the console and resetting the count. Repeats every interval'''
+        while True:     
+            # start sync
+            print("Syncing " + self.source.root_path + " + " + self.replica.root_path)
+            self.compare_folders(self.source.root_path, self.replica.root_path)
+            print("Files created: " + str(self.file_created_count), "Files copied: " + str(self.file_copied_count), "Files deleted: " + str(self.file_deleted_count) + "\n")
+            
+            # clear after printing (if we want an overall count printed, just remove this)
+            self.file_created_count = 0
+            self.file_copied_count = 0
+            self.file_deleted_count = 0
+
+            # sleep for interval
+            time.sleep(self.interval)
+
         
     def compare_folders(self, src, repl):
         '''Recursive folder comparison. Replica folder is modified accordingly to match source folder. 
@@ -165,23 +186,7 @@ class SyncObject:
                 self.write_log("delete", srcpath)
 
 if __name__=="__main__":
-    # Source folder
-    print("Source folder path:")
-    folder1 = Folder(input(), "1")
-    
-    # Replica folder
-    print("Replica folder path:")
-    folder2 = Folder(input(), "2")
 
-    # Log file
-    print("Log file path:")
-    filepath = input()
-
-    # Sync interval
-    print("Sync interval (seconds):")
-    sync_time = input()
-
-    sync = SyncObject(folder1, folder2, filepath, "test")
-    while True:
-        sync.compare_root()
-        time.sleep(int(sync_time))
+    # parse and run
+    sync = parse_arguments()
+    sync.compare_root()
